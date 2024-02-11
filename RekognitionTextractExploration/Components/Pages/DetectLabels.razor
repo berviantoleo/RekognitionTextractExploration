@@ -1,0 +1,109 @@
+﻿@page "/detect-labels"
+@rendermode InteractiveServer
+@using System
+@using System.IO
+@using Microsoft.AspNetCore.Hosting
+@using Amazon
+@using Amazon.Rekognition
+@using Amazon.Rekognition.Model
+@inject ILogger<DetectLabels> Logger
+@inject IWebHostEnvironment Environment
+
+<h3>Detect Labels</h3>
+
+<InputFile OnChange="@LoadFiles" />
+
+@if(isGenerateResult)
+{
+    <p>Generating result...</p>
+}
+
+@if(!string.IsNullOrEmpty(ErrorMessage))
+{
+    <p>@ErrorMessage</p>
+}
+
+@foreach(var result in results)
+{
+    <p>@result</p>
+}
+
+
+
+@code {
+    private long maxFileSize = 1024 * 1024 * 1024;
+    private AmazonRekognitionClient? _rekognitionClient;
+    private List<string> results = new List<string>();
+    private bool isGenerateResult = false;
+    private string ErrorMessage = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        _rekognitionClient = new AmazonRekognitionClient(RegionEndpoint.APSoutheast1);
+    }
+
+    private async Task LoadFiles(InputFileChangeEventArgs e)
+    {
+        if (_rekognitionClient == null)
+        {
+            return;
+        }
+        var files = e.GetMultipleFiles(1);
+        if (files.Count != 1)
+        {
+            return;
+        }
+        var isError = false;
+        try
+        {
+
+            isGenerateResult = true;
+            var file = files[0];
+            var trustedFileName = Path.GetTempFileName();
+
+            var image = new Image();
+
+            using (var fs = new FileStream(trustedFileName, FileMode.Create))
+            {
+                await file.OpenReadStream(maxFileSize).CopyToAsync(fs);
+            }
+            using var readFs = new FileStream(trustedFileName, FileMode.Open, FileAccess.Read);
+
+            byte[] data = null;
+            data = new byte[readFs.Length];
+            readFs.Read(data, 0, (int)readFs.Length);
+            image.Bytes = new MemoryStream(data);
+
+            DetectLabelsRequest detectlabelsRequest = new DetectLabelsRequest()
+                {
+                    Image = image,
+                    MaxLabels = 10,
+                    MinConfidence = 75F
+                };
+            Logger.LogInformation($"Detecting labels for {trustedFileName}");
+            var detectLabelsResponse = await _rekognitionClient.DetectLabelsAsync(detectlabelsRequest);
+            Logger.LogInformation($"Detected labels for {trustedFileName}");
+            results.Clear();
+            foreach (var label in detectLabelsResponse.Labels)
+            {
+                var message = $"Label: {label.Name}, Confidence: {label.Confidence}";
+                Logger.LogInformation(message);
+                results.Add(message);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Something wrong");
+            ErrorMessage = ex.ToString();
+            isError = true;
+        }
+
+        if (!isError)
+        {
+            ErrorMessage = string.Empty;
+        }
+
+
+        isGenerateResult = false;
+    }
+}

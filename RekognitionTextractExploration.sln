@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34526.213
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RekognitionTextractExploration", "RekognitionTextractExploration\RekognitionTextractExploration.csproj", "{86E4FBB0-D457-49EA-A52A-32B3B26EA614}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{86E4FBB0-D457-49EA-A52A-32B3B26EA614}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86E4FBB0-D457-49EA-A52A-32B3B26EA614}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86E4FBB0-D457-49EA-A52A-32B3B26EA614}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86E4FBB0-D457-49EA-A52A-32B3B26EA614}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AF4CBC17-5F17-4817-8CAC-3C7DE7EC8B2B}
+	EndGlobalSection
+EndGlobal

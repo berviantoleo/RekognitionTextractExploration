@@ -1,0 +1,107 @@
+﻿@page "/detect-text"
+@rendermode InteractiveServer
+@using System
+@using System.IO
+@using Microsoft.AspNetCore.Hosting
+@using Amazon
+@using Amazon.Textract
+@using Amazon.Textract.Model
+@inject ILogger<DetectLabels> Logger
+@inject IWebHostEnvironment Environment
+
+<h3>Detect Texts</h3>
+
+<InputFile OnChange="@LoadFiles" />
+
+@if (isGenerateResult)
+{
+    <p>Generating result...</p>
+}
+
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <p>@ErrorMessage</p>
+}
+
+@foreach (var result in results)
+{
+    <p>@result</p>
+}
+
+
+
+@code {
+    private long maxFileSize = 1024 * 1024 * 1024;
+    private AmazonTextractClient? _textractClient;
+    private List<string> results = new List<string>();
+    private bool isGenerateResult = false;
+    private string ErrorMessage = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        _textractClient = new AmazonTextractClient(RegionEndpoint.APSoutheast1);
+    }
+
+    private async Task LoadFiles(InputFileChangeEventArgs e)
+    {
+        if (_textractClient == null)
+        {
+            return;
+        }
+        var files = e.GetMultipleFiles(1);
+        if (files.Count != 1)
+        {
+            return;
+        }
+        var isError = false;
+        try
+        {
+
+            isGenerateResult = true;
+            var file = files[0];
+            var trustedFileName = Path.GetTempFileName();
+
+            var doc = new Document();
+
+            using (var fs = new FileStream(trustedFileName, FileMode.Create))
+            {
+                await file.OpenReadStream(maxFileSize).CopyToAsync(fs);
+            }
+            using var readFs = new FileStream(trustedFileName, FileMode.Open, FileAccess.Read);
+
+            byte[] data = null;
+            data = new byte[readFs.Length];
+            readFs.Read(data, 0, (int)readFs.Length);
+            doc.Bytes = new MemoryStream(data);
+
+            DetectDocumentTextRequest detectText = new DetectDocumentTextRequest()
+                {
+                    Document = doc,
+                };
+            Logger.LogInformation($"Detecting text for {trustedFileName}");
+            var detectTextResponse = await _textractClient.DetectDocumentTextAsync(detectText);
+            Logger.LogInformation($"Detected text for {trustedFileName}");
+            results.Clear();
+            foreach (var block in detectTextResponse.Blocks)
+            {
+                var message = $"Text: {block.Text}, Block Type: {block.BlockType}, Confidence: {block.Confidence}";
+                Logger.LogInformation(message);
+                results.Add(message);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Something wrong");
+            ErrorMessage = ex.ToString();
+            isError = true;
+        }
+
+        if (!isError)
+        {
+            ErrorMessage = string.Empty;
+        }
+
+
+        isGenerateResult = false;
+    }
+}
