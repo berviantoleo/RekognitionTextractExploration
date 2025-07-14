@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.Rekognition" Version="3.7.301.11" />
-    <PackageReference Include="AWSSDK.Textract" Version="3.7.300.48" />
+    <PackageReference Include="AWSSDK.Rekognition" Version="4.0.1.8" />
+    <PackageReference Include="AWSSDK.Textract" Version="4.0.1.2" />
   </ItemGroup>
 
 </Project>
